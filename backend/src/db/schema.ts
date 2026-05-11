@@ -10,7 +10,8 @@ export const users = pgTable("users", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar({ length: 255 }).notNull(),
   email: varchar({ length: 255 }).notNull().unique(),
-  passwd_hash: varchar({ length: 322 }).notNull().unique(),
+  passwd_hash: varchar({ length: 322 }).unique(),
+  google_id: varchar({ length: 255 }).unique(),
   created_at: timestamp(),
   updated_at: timestamp(),
 });
