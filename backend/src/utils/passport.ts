@@ -9,7 +9,6 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      // This must exactly match the authorized URI in your Google Cloud Console
       callbackURL: "/api/auth/google/callback", 
     },
     async (accessToken, refreshToken, profile, done) => {
@@ -19,7 +18,6 @@ passport.use(
           return done(new Error("No email found from Google"), undefined);
         }
 
-        // 1. Check if user already exists
         const existingUsers = await db
           .select()
           .from(users)
@@ -29,7 +27,6 @@ passport.use(
         const existingUser = existingUsers[0];
 
         if (existingUser) {
-          // If they exist but don't have a google_id, link it now
           if (!existingUser.google_id) {
             await db
               .update(users)
@@ -39,7 +36,6 @@ passport.use(
           return done(null, existingUser);
         }
 
-        // 2. If user doesn't exist, create them
         const returnedUsers = await db
           .insert(users)
           .values({
