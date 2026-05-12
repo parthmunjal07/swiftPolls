@@ -4,7 +4,9 @@ import { verifyAccessToken } from "../utils/jwt.js";
 declare global {
   namespace Express {
     interface Request {
-      user?: any; 
+      user?: {
+        id: number;
+      };
     }
   }
 }
@@ -12,7 +14,7 @@ declare global {
 export function authenticationMiddleware() {
   return function (req: Request, res: Response, next: NextFunction) {
     const header = req.headers["authorization"];
-    
+
     if (!header) {
       return next();
     }
@@ -30,11 +32,12 @@ export function authenticationMiddleware() {
         .json({ error: "Token missing from authorization header" });
     }
 
-    const user = verifyAccessToken(token);
-    if (user) {
-      req.user = user;
-    }
+    const payload = verifyAccessToken(token);
     
+    if (payload && payload.userId) {
+      req.user = { id: payload.userId };
+    }
+
     return next();
   };
 }
@@ -42,7 +45,16 @@ export function authenticationMiddleware() {
 export function restrictToAuthenticatedUser() {
   return function (req: Request, res: Response, next: NextFunction) {
     if (!req.user) {
-      return res.status(401).json({ error: 'Authentication Required' });
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    return next();
+  };
+}
+
+export function restrictToSessionHost() {
+  return function (req: Request, res: Response, next: NextFunction) {
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
     }
     return next();
   };

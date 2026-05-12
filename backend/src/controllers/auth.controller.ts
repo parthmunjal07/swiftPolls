@@ -69,7 +69,10 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.passwd_hash || "");
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user.passwd_hash || ""
+    );
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -92,7 +95,7 @@ export const login = async (req: Request, res: Response) => {
 
 export const me = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -122,16 +125,20 @@ export const me = async (req: Request, res: Response) => {
 
 export const googleCallback = async (req: Request, res: Response) => {
   try {
-    const user = req.user as any; 
+    const user = req.user as any;
 
     if (!user) {
-      return res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/login?error=oauth_failed`
+      );
     }
 
     const { accessToken, refreshToken } = generateTokens(user.id);
     setRefreshCookie(res, refreshToken);
 
-    res.redirect(`${process.env.FRONTEND_URL}/auth-success?token=${accessToken}`);
+    res.redirect(
+      `${process.env.FRONTEND_URL}/auth-success?token=${accessToken}`
+    );
   } catch (error) {
     console.error("Google Auth error:", error);
     res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
