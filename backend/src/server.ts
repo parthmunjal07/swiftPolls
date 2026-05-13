@@ -7,14 +7,10 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.routes.js";
 import pollRouter  from "./routes/poll.routes.js";
-
-import { authenticationMiddleware } from "./middlewares/auth.middleware.js";
-
-// import { authRouter } from "./routes/auth.routes.js";
+import { analyticsRouter } from "./routes/analytics.routes.js";
 import { responseRouter } from "./routes/response.routes.js";
 import { sessionRouter } from "./routes/session.routes.js";
-// import { analyticsRouter } from "./routes/analytics.routes.js";
-
+import { authenticationMiddleware } from "./middlewares/auth.middleware.js";
 import { registerSocketHandlers } from "./sockets/index.js";
 import "./jobs/workers.js";
 import { initRepeatableJobs } from "./jobs/queues.js";
@@ -61,7 +57,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/polls", pollRouter);
 app.use("/api/responses", responseRouter);
 app.use("/api/sessions", sessionRouter);
-// app.use("/api/analytics", analyticsRouter);
+app.use("/api/analytics", analyticsRouter);
 
 
 app.use(
