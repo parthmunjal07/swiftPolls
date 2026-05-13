@@ -11,11 +11,11 @@ import pollRouter  from "./routes/poll.routes.js";
 import { authenticationMiddleware } from "./middlewares/auth.middleware.js";
 
 // import { authRouter } from "./routes/auth.routes.js";
-// import { responseRouter } from "./routes/response.routes.js";
-// import { sessionRouter } from "./routes/session.routes.js";
+import { responseRouter } from "./routes/response.routes.js";
+import { sessionRouter } from "./routes/session.routes.js";
 // import { analyticsRouter } from "./routes/analytics.routes.js";
 
-// import { registerSocketHandlers } from "./socket/index.js";
+import { registerSocketHandlers } from "./sockets/index.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -29,7 +29,7 @@ export const io = new SocketIOServer(httpServer, {
   },
 });
 
-// registerSocketHandlers(io);
+registerSocketHandlers(io);
 
 app.use(
   cors({
@@ -57,8 +57,8 @@ app.get("/health", (_req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/polls", pollRouter);
-// app.use("/api/responses", responseRouter);
-// app.use("/api/sessions", sessionRouter);
+app.use("/api/responses", responseRouter);
+app.use("/api/sessions", sessionRouter);
 // app.use("/api/analytics", analyticsRouter);
 
 
