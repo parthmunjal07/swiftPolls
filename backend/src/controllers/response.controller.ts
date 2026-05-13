@@ -9,6 +9,7 @@ import {
   analytics,
 } from "../db/schema.js";
 import { submitAsyncResponseSchema } from "../validations/response.validate.js";
+import { redis } from "../utils/redis.js";
 
 export const submitAsyncResponse = async (req: Request, res: Response) => {
   try {
@@ -38,6 +39,10 @@ export const submitAsyncResponse = async (req: Request, res: Response) => {
 
     if (poll.expires_at && new Date() > poll.expires_at) {
       return res.status(410).json({ message: "This poll has expired" });
+    }
+
+    if (poll.published_at) {
+      return res.status(403).json({ message: "Poll results have already been published" });
     }
 
     // 2. Enforce Login if not Anonymous
@@ -115,34 +120,12 @@ export const submitAsyncResponse = async (req: Request, res: Response) => {
         }))
       );
 
-      // 6. Update Analytics
+      // 6. Buffer Analytics in Redis
+      const pipeline = redis.pipeline();
       for (const ans of answers) {
-        const [existingAnalytics] = await tx
-          .select()
-          .from(analytics)
-          .where(
-            and(
-              eq(analytics.poll_id, poll_id),
-              eq(analytics.option_id, ans.option_id)
-            )
-          )
-          .limit(1);
-
-        if (existingAnalytics) {
-          await tx
-            .update(analytics)
-            .set({ count: existingAnalytics.count + 1 })
-            .where(eq(analytics.id, existingAnalytics.id));
-        } else {
-          await tx.insert(analytics).values({
-            poll_id,
-            session_id: null,
-            option_id: ans.option_id,
-            count: 1,
-            recorded_at: new Date(),
-          });
-        }
+        pipeline.incr(`analytics:${poll_id}:${ans.option_id}`);
       }
+      await pipeline.exec();
     });
 
     return res.status(201).json({ message: "Response submitted successfully" });

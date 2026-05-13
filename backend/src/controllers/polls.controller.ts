@@ -13,6 +13,7 @@ import {
   createPollSchema,
   updatePollSchema,
 } from "../validations/poll.validate.js";
+import { schedulePollExpiry } from "../jobs/queues.js";
 
 // post /api/polls
 export const createPoll = async (req: Request, res: Response) => {
@@ -100,6 +101,10 @@ export const createPoll = async (req: Request, res: Response) => {
 
       return { ...newPoll, questions: insertedQuestions };
     });
+
+    if (result.expires_at) {
+      await schedulePollExpiry(result.id, result.expires_at);
+    }
 
     return res.status(201).json({ message: "Poll created successfully", poll: result });
   } catch (error) {

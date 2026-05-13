@@ -16,6 +16,8 @@ import { sessionRouter } from "./routes/session.routes.js";
 // import { analyticsRouter } from "./routes/analytics.routes.js";
 
 import { registerSocketHandlers } from "./sockets/index.js";
+import "./jobs/workers.js";
+import { initRepeatableJobs } from "./jobs/queues.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -79,4 +81,5 @@ const port = process.env.PORT || 8079;
 httpServer.listen(port, () => {
   console.log(`Server running on port ${port}`);
   console.log(`WebSocket server ready`);
+  initRepeatableJobs().catch(console.error);
 });

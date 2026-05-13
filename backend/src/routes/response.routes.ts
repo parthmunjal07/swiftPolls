@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { submitAsyncResponse } from "../controllers/response.controller.js";
 import { authenticationMiddleware } from "../middlewares/auth.middleware.js";
+import { submissionRateLimiter } from "../middlewares/rateLimiter.middleware.js";
 
 export const responseRouter = Router();
 
@@ -9,6 +10,7 @@ export const responseRouter = Router();
 // since some polls require authentication while others are anonymous.
 responseRouter.post(
   "/async",
+  submissionRateLimiter,
   authenticationMiddleware(),
   submitAsyncResponse
 );
