@@ -5,6 +5,7 @@ import { Server as SocketIOServer } from "socket.io";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import authRouter from "./routes/auth.routes.js";
 
 import { authenticationMiddleware } from "./middlewares/auth.middleware.js";
 
@@ -54,13 +55,12 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// app.use("/api/auth", authRouter);
+app.use("/api/auth", authRouter);
 // app.use("/api/polls", pollRouter);
 // app.use("/api/responses", responseRouter);
 // app.use("/api/sessions", sessionRouter);
 // app.use("/api/analytics", analyticsRouter);
 
-// ─── Global error handler ─────────────────────────────────────────────────────
 
 app.use(
   (
@@ -73,8 +73,6 @@ app.use(
     res.status(500).json({ message: "Internal server error" });
   }
 );
-
-// ─── Start ────────────────────────────────────────────────────────────────────
 
 const port = process.env.PORT || 8079;
 

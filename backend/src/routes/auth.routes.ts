@@ -4,18 +4,18 @@ import { signup, login, me, googleCallback } from "../controllers/auth.controlle
 import { authenticationMiddleware, restrictToAuthenticatedUser } from "../middlewares/auth.middleware.js";
 import "../utils/passport.js";
 
-const router = Router();
+const authRouter = Router();
 
-router.post("/signup", signup);
-router.post("/login", login);
-router.get("/me", authenticationMiddleware(), restrictToAuthenticatedUser(), me);
+authRouter.post("/signup", signup);
+authRouter.post("/login", login);
+authRouter.get("/me", authenticationMiddleware(), restrictToAuthenticatedUser(), me);
 
-router.get(
+authRouter.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"], session: false })
 );
 
-router.get(
+authRouter.get(
   "/google/callback",
   passport.authenticate("google", { 
     session: false, 
@@ -24,4 +24,4 @@ router.get(
   googleCallback
 );
 
-export default router;
+export default authRouter;
