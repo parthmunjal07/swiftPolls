@@ -13,9 +13,7 @@ export function authenticationMiddleware() {
   return function (req: Request, res: Response, next: NextFunction) {
     const header = req.headers["authorization"];
 
-    if (!header) {
-      return next();
-    }
+    if (!header) return next();
 
     if (!header.startsWith("Bearer ")) {
       return res
@@ -31,7 +29,6 @@ export function authenticationMiddleware() {
     }
 
     const payload = verifyAccessToken(token);
-    
     if (payload && payload.userId) {
       req.user = { id: payload.userId };
     }
