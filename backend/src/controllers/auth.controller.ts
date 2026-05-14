@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
 import { generateTokens, setRefreshCookie } from "../utils/jwt.js";
+import jwt from "jsonwebtoken";
 
 export const signup = async (req: Request, res: Response) => {
   try {
@@ -142,5 +143,29 @@ export const googleCallback = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Google Auth error:", error);
     res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
+  }
+};
+
+export const refresh = async (req: Request, res: Response) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: "No refresh token provided" });
+    }
+
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET as string
+    ) as { userId: number };
+
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded.userId);
+
+    setRefreshCookie(res, newRefreshToken);
+
+    return res.status(200).json({ accessToken });
+  } catch (error) {
+    console.error("Refresh token error:", error);
+    return res.status(401).json({ message: "Invalid or expired refresh token" });
   }
 };

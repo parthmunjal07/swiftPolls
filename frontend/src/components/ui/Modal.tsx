@@ -43,7 +43,7 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Content */}
       <div
         className={cn(
-          "relative w-full max-w-lg scale-100 rounded-2xl bg-white p-6 shadow-2xl transition-all border border-border",
+          "relative w-full max-w-lg scale-100 rounded-2xl bg-background p-6 shadow-2xl transition-all border border-border",
           className
         )}
       >
