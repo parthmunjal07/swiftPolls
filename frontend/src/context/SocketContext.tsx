@@ -10,26 +10,25 @@ interface SocketContextType {
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:8079";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8079/api";
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_URL.replace("/api", "");
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+
   const { } = useAuth();
 
   useEffect(() => {
-    // We only connect if authenticated, or if we want to allow guest participants
-    // For participants joining via code, they might not be authenticated.
-    // So let's connect by default but maybe add auth info if available.
-    
     const newSocket = io(SOCKET_URL, {
       withCredentials: true,
       autoConnect: true,
+      transports: ["websocket", "polling"],
     });
 
     newSocket.on("connect", () => {
       setIsConnected(true);
-      console.log("Socket connected");
+      console.log(`Socket connected successfully to: ${SOCKET_URL}`);
     });
 
     newSocket.on("disconnect", () => {
