@@ -4,10 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/server",
+    "start": "node dist/server.js",
     "build": "tsc",
     "dev": "tsc-watch --onSuccess \"node dist/server\"",
     "studio": "drizzle-kit studio",
+    "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
   },
