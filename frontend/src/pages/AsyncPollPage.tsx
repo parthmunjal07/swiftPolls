@@ -150,9 +150,12 @@ export const AsyncPollPage = () => {
       return;
     }
     submit({
-      poll_id: poll.id,
-      answers: Object.entries(answers).map(([question_id, option_id]) => ({ question_id, option_id })),
-      dedup_token: crypto.randomUUID(),
+      poll_id: Number(poll.id),
+      answers: Object.entries(answers).map(([ques_id, option_id]) => ({
+        ques_id: Number(ques_id),
+        option_id: Number(option_id)
+      })),
+      session_token: crypto.randomUUID(),
     });
   };
 

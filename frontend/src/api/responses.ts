@@ -12,9 +12,9 @@ export const submitLiveResponse = async (data: {
 };
 
 export const submitAsyncResponse = async (data: {
-  poll_id: string;
-  answers: { question_id: string; option_id: string }[];
-  dedup_token: string;
+  poll_id: number; // Changed to number
+  answers: { ques_id: number; option_id: number }[]; // Changed to ques_id and numbers
+  session_token: string; // Changed to session_token
 }) => {
   const response = await api.post("/responses/async", data);
   return response.data;
