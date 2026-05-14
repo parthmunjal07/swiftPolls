@@ -108,24 +108,31 @@ export const PollBuilderPage = () => {
     <div className="min-h-[calc(100vh-4rem)] bg-muted/30 pb-20">
       {/* Top Navigation Bar */}
       <div className="bg-background border-b border-border sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="shrink-0 text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-5 w-5" />
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="shrink-0 text-muted-foreground hover:text-foreground h-8 w-8 sm:h-10 sm:w-10">
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-            <h1 className="font-semibold text-lg border-l border-border pl-4">Create New Poll</h1>
+            <h1 className="font-semibold text-sm sm:text-lg border-l border-border pl-2 sm:pl-4 truncate">Create New Poll</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={handleSaveDraft}
               disabled={isSavingDraft || isPublishing}
+              className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
             >
               {isSavingDraft ? "Saving…" : "Save Draft"}
             </Button>
-            <Button onClick={handleSubmit(onSubmit)} className="shadow-md shadow-primary/20" disabled={isPublishing || isSavingDraft}>
-              <Rocket className="mr-2 h-4 w-4" />
+            <Button
+              onClick={handleSubmit(onSubmit)}
+              size="sm"
+              className="shadow-md shadow-primary/20 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
+              disabled={isPublishing || isSavingDraft}
+            >
+              <Rocket className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
               {isPublishing ? "Publishing..." : "Publish Poll"}
             </Button>
           </div>
@@ -143,18 +150,18 @@ export const PollBuilderPage = () => {
           
           {/* Mode Toggle */}
           <Card className="border-border shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <h3 className="font-semibold text-sm">Poll Mode</h3>
                   <p className="text-sm text-muted-foreground">Choose between live interactive or async survey</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 shrink-0">
                   <Button
                     type="button"
                     variant={mode === "live" ? "primary" : "outline"}
                     onClick={() => handleModeChange("live")}
-                    className="gap-2"
+                    className="gap-2 flex-1 sm:flex-none"
                   >
                     🔴 Live
                   </Button>
@@ -162,7 +169,7 @@ export const PollBuilderPage = () => {
                     type="button"
                     variant={mode === "async" ? "primary" : "outline"}
                     onClick={() => handleModeChange("async")}
-                    className="gap-2"
+                    className="gap-2 flex-1 sm:flex-none"
                   >
                     📊 Async
                   </Button>
@@ -207,7 +214,7 @@ export const PollBuilderPage = () => {
               <input
                 type="text"
                 placeholder="What do you want to ask?"
-                className="w-full text-4xl font-bold bg-transparent border-none outline-none placeholder:text-muted-foreground/50 focus:ring-0 px-0"
+                className="w-full text-2xl sm:text-4xl font-bold bg-transparent border-none outline-none placeholder:text-muted-foreground/50 focus:ring-0 px-0"
                 {...control.register("title")}
               />
               {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
@@ -215,7 +222,7 @@ export const PollBuilderPage = () => {
             <div>
               <textarea
                 placeholder="Add an optional description or context..."
-                className="w-full text-lg bg-transparent border-none outline-none placeholder:text-muted-foreground/50 focus:ring-0 px-0 resize-none min-h-[60px]"
+                className="w-full text-base sm:text-lg bg-transparent border-none outline-none placeholder:text-muted-foreground/50 focus:ring-0 px-0 resize-none min-h-[60px]"
                 {...control.register("description")}
               />
             </div>
