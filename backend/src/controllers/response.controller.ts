@@ -39,9 +39,9 @@ export const submitAsyncResponse = async (req: Request, res: Response) => {
       return res.status(410).json({ message: "This poll has expired" });
     }
 
-    if (poll.published_at) {
-      return res.status(403).json({ message: "Poll results have already been published" });
-    }
+    // if (poll.published_at) {
+    //   return res.status(403).json({ message: "Poll results have already been published" });
+    // }
 
     const user_id = req.user?.id || null;
     if (!poll.is_anonymous && !user_id) {
@@ -95,7 +95,7 @@ export const submitAsyncResponse = async (req: Request, res: Response) => {
         .insert(responses)
         .values({
           poll_id,
-          session_id: null, 
+          session_id: null,
           user_id,
           session_token,
           submitted_at: new Date(),
