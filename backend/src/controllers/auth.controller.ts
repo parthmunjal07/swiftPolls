@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
 import { generateTokens, setRefreshCookie } from "../utils/jwt.js";
-import jwt from "jsonwebtoken";
+import * as jwt from "jsonwebtoken";
 
 export const signup = async (req: Request, res: Response) => {
   try {
