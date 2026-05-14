@@ -190,7 +190,7 @@ export const PollBuilderPage = () => {
                       type="checkbox"
                       id="poll-is-anonymous"
                       className="h-4 w-4 accent-primary"
-                      {...control.register("is_anonymous", { valueAsBoolean: true })}
+                      {...control.register("is_anonymous")}
                     />
                     <label htmlFor="poll-is-anonymous" className="text-sm font-medium cursor-pointer">
                       Allow anonymous responses

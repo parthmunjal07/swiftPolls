@@ -14,7 +14,7 @@ type BarTooltipPayload = {
   pct?: number;
 };
 
-export function VotesBarTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
+export function VotesBarTooltip({ active, payload, label }: TooltipContentProps) {
   if (!active || !payload?.length) return null;
   const row = payload[0];
   const data = row.payload as BarTooltipPayload;

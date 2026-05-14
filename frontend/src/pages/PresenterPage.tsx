@@ -254,7 +254,7 @@ export const PresenterPage = () => {
                       <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 48 }}>
                         <XAxis type="number" hide />
                         <YAxis type="category" dataKey="name" width={140} tick={chartAxisTick} />
-                        <Tooltip content={<VotesBarTooltip />} cursor={{ fill: "var(--muted)", fillOpacity: 0.45 }} />
+                        <Tooltip content={VotesBarTooltip} cursor={{ fill: "var(--muted)", fillOpacity: 0.45 }} />
                         <Bar dataKey="votes" radius={[0, 8, 8, 0]}>
                           {chartData.map((_: unknown, i: number) => (
                             <Cell key={i} fill={CHART_BAR_COLORS[i % CHART_BAR_COLORS.length]} />
