@@ -12,6 +12,17 @@ import {
 } from "../db/schema.js";
 import { redis } from "../utils/redis.js";
 
+type PollRow = typeof polls.$inferSelect;
+
+const derivePollStatus = (poll: Pick<PollRow, "published_at" | "expires_at" | "is_active">) => {
+  if (!poll.published_at) return "draft" as const;
+  if (!poll.is_active) return "ended" as const;
+  if (poll.expires_at && new Date(poll.expires_at).getTime() < Date.now()) {
+    return "ended" as const;
+  }
+  return "active" as const;
+};
+
 const flushRedisToDB = async (pollId: number) => {
   const keys = await redis.keys(`analytics:${pollId}:*`);
   if (keys.length === 0) return;
@@ -168,11 +179,27 @@ export const getPollAnalytics = async (req: Request, res: Response) => {
       }),
     );
 
+    const createdAt = poll.created_at
+      ? new Date(poll.created_at).toISOString()
+      : new Date().toISOString();
+
     return res.status(200).json({
-      poll_id: pollId,
+      id: String(pollId),
+      title: poll.title,
+      status: derivePollStatus(poll),
       mode: poll.mode,
-      total_responses: totalResponses,
-      per_question: perQuestion,
+      createdAt,
+      totalResponses,
+      questions: perQuestion.map((q) => ({
+        id: String(q.id),
+        title: q.body,
+        totalResponses: q.total_answers,
+        options: q.options.map((o) => ({
+          id: String(o.id),
+          text: o.text,
+          votes: o.count,
+        })),
+      })),
     });
   } catch (error) {
     console.error("getPollAnalytics error:", error);

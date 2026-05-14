@@ -1,19 +1,36 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../lib/axios";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../components/ui/Card";
+import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 import { LogIn } from "lucide-react";
+
+const oauthErrorMessages: Record<string, string> = {
+  google_auth_failed: "Google sign-in was cancelled or failed.",
+  oauth_failed: "We could not complete sign-in. Please try again.",
+  server_error: "Something went wrong. Please try again later.",
+};
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const errKey = searchParams.get("error");
+    if (!errKey) return;
+    setError(oauthErrorMessages[errKey] || "Authentication failed.");
+    const next = new URLSearchParams(searchParams);
+    next.delete("error");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +63,16 @@ export const LoginPage: React.FC = () => {
             Enter your credentials to access your dashboard
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          <GoogleSignInButton />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+            </div>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Email"

@@ -8,10 +8,10 @@ import { submitLiveResponse } from "../api/responses";
 import { useSocket } from "../context/SocketContext";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent } from "../components/ui/Card";
+import { CHART_BAR_COLORS, chartAxisTick, VotesBarTooltip } from "../lib/chartTheme";
+import { cn } from "../lib/utils";
 
 type AudienceState = "joining" | "waiting" | "active" | "results" | "ended";
-
-const CHART_COLORS = ["#16a34a", "#4ade80", "#86efac", "#bbf7d0", "#dcfce7"];
 
 interface LiveQuestion {
   id: string;
@@ -245,6 +245,7 @@ export const AudiencePage = () => {
 
   const totalVotes = Object.values(voteCounts).reduce((a, b) => a + b, 0);
   const chartData = currentQuestion.options.map((o) => ({
+    id: o.id,
     name: o.text,
     votes: voteCounts[o.id] ?? 0,
     pct: totalVotes > 0 ? Math.round(((voteCounts[o.id] ?? 0) / totalVotes) * 100) : 0,
@@ -276,39 +277,50 @@ export const AudiencePage = () => {
         </div>
 
         {/* Options */}
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {currentQuestion.options.map((opt, idx) => {
             const isSelected = selectedOption === opt.id;
             const pct = totalVotes > 0 ? Math.round(((voteCounts[opt.id] ?? 0) / totalVotes) * 100) : 0;
             return (
               <button
                 key={opt.id}
+                type="button"
                 onClick={() => handleVote(opt.id)}
                 disabled={hasVoted}
-                className={`relative w-full text-left px-5 py-4 rounded-xl border-2 transition-all duration-300 text-sm font-medium overflow-hidden ${
+                className={cn(
+                  "relative w-full overflow-hidden rounded-xl border px-4 py-3.5 text-left text-sm font-medium",
+                  "transition-colors duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   isSelected
                     ? "border-primary bg-primary/10 text-primary"
                     : hasVoted
-                    ? "border-border bg-background opacity-70 cursor-not-allowed"
-                    : "border-border bg-background hover:border-primary/60 hover:bg-muted/50 active:scale-[0.99]"
-                }`}
+                      ? "cursor-not-allowed border-border bg-muted/40 text-muted-foreground"
+                      : "border-border bg-background text-foreground hover:border-primary/40 hover:bg-muted",
+                )}
               >
-                {/* Progress fill behind (shown after vote if results visible) */}
                 {resultsVisible && (
                   <div
-                    className="absolute inset-0 bg-primary/10 transition-all duration-700"
+                    className="pointer-events-none absolute inset-y-0 left-0 z-0 bg-primary/9 transition-[width] duration-700 ease-out"
                     style={{ width: `${pct}%` }}
+                    aria-hidden
                   />
                 )}
-                <div className="relative flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">
+                <div className="relative z-10 flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <span
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                        isSelected
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
                       {String.fromCharCode(65 + idx)}
                     </span>
-                    {opt.text}
+                    <span className="min-w-0 leading-snug">{opt.text}</span>
                   </div>
                   {resultsVisible && (
-                    <span className="text-xs font-bold text-primary shrink-0">{pct}%</span>
+                    <span className="shrink-0 text-xs font-semibold tabular-nums text-primary">{pct}%</span>
                   )}
                 </div>
               </button>
@@ -319,15 +331,19 @@ export const AudiencePage = () => {
         {/* Live bar chart (shown when results visible) */}
         {resultsVisible && (
           <Card className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <CardContent className="p-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Live Results</p>
+            <div className="border-b border-border px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Live results</p>
+            </div>
+            <CardContent className="p-4 pt-4">
               <ResponsiveContainer width="100%" height={Math.max(100, currentQuestion.options.length * 40)}>
                 <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 40 }}>
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(v: any, _: any, p: any) => [`${v} (${p.payload.pct}%)`]} contentStyle={{ borderRadius: 8 }} />
-                  <Bar dataKey="votes" radius={[0, 6, 6, 0]}>
-                    {chartData.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                  <YAxis type="category" dataKey="name" width={110} tick={chartAxisTick} />
+                  <Tooltip content={VotesBarTooltip} cursor={{ fill: "var(--muted)", fillOpacity: 0.45 }} />
+                  <Bar dataKey="votes" radius={[0, 8, 8, 0]}>
+                    {chartData.map((row, i) => (
+                      <Cell key={row.id} fill={CHART_BAR_COLORS[i % CHART_BAR_COLORS.length]} />
+                    ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

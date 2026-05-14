@@ -1,11 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import api from "../lib/axios";
 
 export const AuthSuccessPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { } = useAuth();
+  const { login } = useAuth();
+  const [message, setMessage] = useState("Signing you in…");
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -14,21 +16,28 @@ export const AuthSuccessPage = () => {
       return;
     }
 
-    // Store token and clear URL params
-    // The login function in AuthContext stores the token and triggers /auth/me
-    // We temporarily store it and let AuthContext rehydrate
-    localStorage.setItem("accessToken", token);
+    let cancelled = false;
 
-    // Clear the token from the URL so it's not bookmarkable
-    window.history.replaceState({}, document.title, "/auth-success");
+    (async () => {
+      try {
+        localStorage.setItem("accessToken", token);
+        window.history.replaceState({}, document.title, "/auth-success");
+        const { data } = await api.get("/auth/me");
+        if (cancelled) return;
+        login(token, data.user);
+        navigate("/dashboard", { replace: true });
+      } catch {
+        if (cancelled) return;
+        localStorage.removeItem("accessToken");
+        setMessage("Could not finish sign-in. Redirecting…");
+        navigate("/login?error=oauth_failed", { replace: true });
+      }
+    })();
 
-    // Small delay to let AuthContext pick up the token via its useEffect
-    const timer = setTimeout(() => {
-      navigate("/dashboard", { replace: true });
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, navigate, login]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -42,7 +51,7 @@ export const AuthSuccessPage = () => {
           </div>
         </div>
         <div>
-          <h2 className="text-xl font-bold text-foreground">Signing you in…</h2>
+          <h2 className="text-xl font-bold text-foreground">{message}</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Redirecting to your dashboard
           </p>

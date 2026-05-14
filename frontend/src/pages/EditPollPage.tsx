@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, GripVertical, Plus, Trash2, Save, Eye, Clock, AlertTriangle, Loader2 } from "lucide-react";
+import { ArrowLeft, GripVertical, Plus, Trash2, Save, Eye, Clock, AlertTriangle, Loader2, UserRound } from "lucide-react";
 import { fetchPollById, updatePoll } from "../api/polls";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent } from "../components/ui/Card";
@@ -24,11 +24,12 @@ const editPollSchema = z.object({
   title: z.string().min(1, "Poll title is required"),
   description: z.string().optional(),
   mode: z.enum(["live", "async"] as const),
+  is_anonymous: z.boolean().default(false),
   expiresAt: z.string().nullable().optional(),
   questions: z.array(questionSchema).min(1, "At least 1 question required"),
 });
 
-type EditPollForm = z.infer<typeof editPollSchema>;
+type EditPollForm = z.input<typeof editPollSchema>;
 
 export const EditPollPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,6 +50,7 @@ export const EditPollPage = () => {
       title: "",
       description: "",
       mode: "live",
+      is_anonymous: false,
       questions: [{ title: "", is_mandatory: true, settings: { show_results_live: true, time_limit: null }, options: [{ text: "" }, { text: "" }] }],
     },
   });
@@ -64,6 +66,7 @@ export const EditPollPage = () => {
       title: poll.title ?? "",
       description: poll.description ?? "",
       mode: pollMode,
+      is_anonymous: poll.is_anonymous ?? false,
       expiresAt: poll.expiresAt ?? poll.expires_at ?? null,
       questions: poll.questions?.map((q) => ({
         title: q.title ?? q.body ?? "",
@@ -150,6 +153,36 @@ export const EditPollPage = () => {
                 <div className="flex gap-2">
                   <Button type="button" variant={mode === "live" ? "primary" : "outline"} onClick={() => handleModeChange("live")} className="gap-2">🔴 Live</Button>
                   <Button type="button" variant={mode === "async" ? "primary" : "outline"} onClick={() => handleModeChange("async")} className="gap-2">📊 Async</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex gap-3">
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <UserRound className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-sm">Anonymous responses</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                      For async polls: if enabled, anyone with the link can respond without an account. If disabled,
+                      respondents must be signed in.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="edit-poll-is-anonymous"
+                      className="h-4 w-4 accent-primary"
+                      {...control.register("is_anonymous")}
+                    />
+                    <label htmlFor="edit-poll-is-anonymous" className="text-sm font-medium cursor-pointer">
+                      Allow anonymous responses
+                    </label>
+                  </div>
                 </div>
               </div>
             </CardContent>

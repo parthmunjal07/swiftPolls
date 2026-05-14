@@ -7,10 +7,10 @@ import { fetchPollBySlug } from "../api/polls";
 import { submitAsyncResponse } from "../api/responses";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent } from "../components/ui/Card";
+import { CHART_BAR_COLORS, chartAxisTick, VotesBarTooltip } from "../lib/chartTheme";
+import { cn } from "../lib/utils";
 import { ThankYouPage } from "./ThankYouPage";
 import type { Question } from "../types";
-
-const CHART_COLORS = ["#16a34a", "#4ade80", "#86efac", "#bbf7d0", "#dcfce7"];
 
 export const AsyncPollPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -122,10 +122,12 @@ export const AsyncPollPage = () => {
                   <ResponsiveContainer width="100%" height={Math.max(120, q.options.length * 44)}>
                     <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 48 }}>
                       <XAxis type="number" hide />
-                      <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 12 }} />
-                      <Tooltip formatter={(v: any, _: any, p: any) => [`${v} (${p.payload.pct}%)`]} contentStyle={{ borderRadius: 8 }} />
-                      <Bar dataKey="votes" radius={[0, 6, 6, 0]}>
-                        {chartData.map((_: any, idx: number) => <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />)}
+                      <YAxis type="category" dataKey="name" width={130} tick={chartAxisTick} />
+                      <Tooltip content={VotesBarTooltip} cursor={{ fill: "var(--muted)", fillOpacity: 0.45 }} />
+                      <Bar dataKey="votes" radius={[0, 8, 8, 0]}>
+                        {chartData.map((_: any, idx: number) => (
+                          <Cell key={idx} fill={CHART_BAR_COLORS[idx % CHART_BAR_COLORS.length]} />
+                        ))}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -215,14 +217,25 @@ const QuestionCard: React.FC<{ question: Question; index: number; selectedOption
         return (
           <button
             key={opt.id}
+            type="button"
             onClick={() => onSelect(opt.id!)}
-            className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all duration-200 text-sm font-medium ${
-              isSelected ? "border-primary bg-primary/10 text-primary" : "border-border bg-background hover:border-primary/50 hover:bg-muted/50"
-            }`}
+            className={cn(
+              "w-full text-left rounded-xl border px-4 py-3.5 text-sm font-medium",
+              "transition-colors duration-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              isSelected
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-background text-foreground hover:border-primary/40 hover:bg-muted",
+            )}
           >
             <div className="flex items-center gap-3">
-              <div className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${isSelected ? "border-primary bg-primary" : "border-muted-foreground/40"}`}>
-                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+              <div
+                className={cn(
+                  "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                  isSelected ? "border-primary bg-primary" : "border-muted-foreground/35 bg-background",
+                )}
+              >
+                {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />}
               </div>
               {opt.text}
             </div>

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import api from "../lib/axios";
 
 interface User {
@@ -44,10 +44,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  const login = (accessToken: string, user: User) => {
+  const login = useCallback((accessToken: string, user: User) => {
     localStorage.setItem("accessToken", accessToken);
     setUser(user);
-  };
+  }, []);
 
   const logout = async () => {
     try {

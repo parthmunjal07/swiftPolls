@@ -1,4 +1,11 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+  useParams,
+} from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
@@ -38,6 +45,14 @@ const LayoutWrapper = () => (
     <Outlet />
   </Layout>
 );
+
+/** Legacy landing links used `/live/:code`; audience join lives at `/join/:code`. */
+const LiveJoinRedirect = () => {
+  const { code } = useParams<{ code: string }>();
+  const normalized = code?.trim().toUpperCase();
+  if (!normalized) return <Navigate to="/" replace />;
+  return <Navigate to={`/join/${encodeURIComponent(normalized)}`} replace />;
+};
 
 function App() {
   return (
@@ -105,6 +120,7 @@ function App() {
                 />
 
                 {/* Audience join — public */}
+                <Route path="/live/:code" element={<LiveJoinRedirect />} />
                 <Route path="/join/:code" element={<AudiencePage />} />
                 <Route path="/join" element={<AudiencePage />} />
 

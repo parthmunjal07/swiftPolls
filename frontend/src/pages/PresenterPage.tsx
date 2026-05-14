@@ -11,9 +11,8 @@ import { useSocket } from "../context/SocketContext";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent } from "../components/ui/Card";
 import { Modal } from "../components/ui/Modal";
+import { CHART_BAR_COLORS, chartAxisTick, VotesBarTooltip } from "../lib/chartTheme";
 import type { Question } from "../types";
-
-const CHART_COLORS = ["#16a34a", "#4ade80", "#86efac", "#bbf7d0", "#dcfce7"];
 
 interface SessionState {
   roomCode: string;
@@ -220,15 +219,18 @@ export const PresenterPage = () => {
               </div>
 
               {/* Options preview */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {currentQuestion.options.map((opt, idx) => (
-                  <div key={opt.id ?? idx} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-background">
-                    <span className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+                  <div
+                    key={opt.id ?? idx}
+                    className="flex items-center gap-3 rounded-xl border border-border bg-muted/20 px-4 py-3"
+                  >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
                       {String.fromCharCode(65 + idx)}
                     </span>
-                    <span className="text-sm font-medium">{opt.text}</span>
+                    <span className="min-w-0 flex-1 text-sm font-medium leading-snug">{opt.text}</span>
                     {session.resultsVisible && (
-                      <span className="ml-auto text-xs font-bold text-primary">
+                      <span className="shrink-0 text-xs font-semibold tabular-nums text-primary">
                         {chartData[idx]?.pct ?? 0}%
                       </span>
                     )}
@@ -238,23 +240,25 @@ export const PresenterPage = () => {
 
               {/* Live bar chart */}
               <Card>
-                <div className="px-5 py-3 border-b border-border flex items-center justify-between">
-                  <p className="text-sm font-semibold">Live Results</p>
-                  <p className="text-xs text-muted-foreground">{totalVotes} responses</p>
+                <div className="flex items-center justify-between border-b border-border px-5 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Live results</p>
+                  <p className="text-xs text-muted-foreground tabular-nums">{totalVotes} responses</p>
                 </div>
                 <CardContent className="p-5">
                   {totalVotes === 0 ? (
-                    <div className="h-32 flex items-center justify-center text-muted-foreground text-sm">
+                    <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
                       Waiting for votes…
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height={Math.max(120, currentQuestion.options.length * 48)}>
                       <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 48 }}>
                         <XAxis type="number" hide />
-                        <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 13 }} />
-                        <Tooltip formatter={(v: any, _: any, p: any) => [`${v} (${p.payload.pct}%)`]} contentStyle={{ borderRadius: 8 }} />
-                        <Bar dataKey="votes" radius={[0, 6, 6, 0]}>
-                          {chartData.map((_: any, i: number) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                        <YAxis type="category" dataKey="name" width={140} tick={chartAxisTick} />
+                        <Tooltip content={<VotesBarTooltip />} cursor={{ fill: "var(--muted)", fillOpacity: 0.45 }} />
+                        <Bar dataKey="votes" radius={[0, 8, 8, 0]}>
+                          {chartData.map((_: unknown, i: number) => (
+                            <Cell key={i} fill={CHART_BAR_COLORS[i % CHART_BAR_COLORS.length]} />
+                          ))}
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>

@@ -5,6 +5,7 @@ import api from "../lib/axios";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../components/ui/Card";
+import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 import { UserPlus } from "lucide-react";
 
 export const SignupPage: React.FC = () => {
@@ -47,7 +48,16 @@ export const SignupPage: React.FC = () => {
             Sign up to start creating and hosting polls
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          <GoogleSignInButton />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or sign up with email</span>
+            </div>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Full Name"

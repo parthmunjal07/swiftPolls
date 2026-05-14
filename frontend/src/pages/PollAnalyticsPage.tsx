@@ -75,7 +75,20 @@ export const PollAnalyticsPage = () => {
     };
   }, [socket, pollId]);
 
-  const data = liveData || pollAnalytics;
+  const data =
+    liveData && pollAnalytics
+      ? {
+          ...pollAnalytics,
+          ...liveData,
+          status: liveData.status ?? pollAnalytics.status,
+          title: liveData.title ?? pollAnalytics.title,
+          totalResponses: liveData.totalResponses ?? pollAnalytics.totalResponses,
+          questions:
+            liveData.questions?.length && liveData.questions.length > 0
+              ? liveData.questions
+              : pollAnalytics.questions,
+        }
+      : liveData || pollAnalytics;
 
   if (isLoading) {
     return (
@@ -103,7 +116,14 @@ export const PollAnalyticsPage = () => {
     active: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800",
     draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700",
     ended: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800",
-  };
+  } as const;
+
+  const rawStatus = data.status ?? "draft";
+  const pollStatus: keyof typeof statusColors =
+    rawStatus === "active" || rawStatus === "ended" || rawStatus === "draft"
+      ? rawStatus
+      : "draft";
+  const statusLabel = pollStatus.charAt(0).toUpperCase() + pollStatus.slice(1);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-muted/20 pb-20">
@@ -116,14 +136,14 @@ export const PollAnalyticsPage = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="border-l border-border pl-4">
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${statusColors[data.status]}`}>
-                {data.status.charAt(0).toUpperCase() + data.status.slice(1)}
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${statusColors[pollStatus]}`}>
+                {statusLabel}
               </span>
             </div>
           </div>
           <Button
             onClick={() => publishPollMutation()}
-            disabled={isPublishing || data.status !== "draft"}
+            disabled={isPublishing || pollStatus !== "draft"}
             className="gap-2"
           >
             <Rocket className="h-4 w-4" />

@@ -1,6 +1,7 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { cn } from "../../lib/utils";
 import { Button } from "../ui/Button";
 import { LogOut, BarChart2, PlusCircle, Moon, Sun } from "lucide-react";
 
@@ -37,11 +38,20 @@ export const Navbar: React.FC = () => {
 
           {isAuthenticated ? (
             <>
-              <Link to="/dashboard">
-                <Button variant="ghost" size="sm" className="hidden sm:flex">
-                  Dashboard
-                </Button>
-              </Link>
+              <NavLink
+                to="/dashboard"
+                end
+                className={({ isActive }) =>
+                  cn(
+                    "hidden h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors sm:inline-flex",
+                    isActive
+                      ? "bg-primary/12 text-primary shadow-sm ring-1 ring-primary/20"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  )
+                }
+              >
+                Dashboard
+              </NavLink>
               <Link to="/polls/create">
                 <Button size="sm" className="hidden sm:flex">
                   <PlusCircle className="mr-2 h-4 w-4" />

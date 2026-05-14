@@ -14,6 +14,53 @@ import {
   updatePollSchema,
 } from "../validations/poll.validate.js";
 import { schedulePollExpiry } from "../jobs/queues.js";
+import type { z } from "zod";
+
+function normalizeDraftCreatePoll(
+  data: z.infer<typeof createPollSchema>
+): z.infer<typeof createPollSchema> {
+  if (!data.draft) return data;
+
+  const title = data.title.trim() || "Untitled poll";
+
+  let questions = data.questions.map((q, index) => {
+    const body = q.body.trim() || `Question ${index + 1}`;
+    let options = q.options.map((o, j) => ({
+      text: o.text.trim() || `Option ${j + 1}`,
+      display_order: j,
+    }));
+    while (options.length < 2) {
+      options.push({
+        text: `Option ${options.length + 1}`,
+        display_order: options.length,
+      });
+    }
+    const capped = options.slice(0, 10).map((o, j) => ({ ...o, display_order: j }));
+    return {
+      ...q,
+      body,
+      display_order: index,
+      options: capped,
+    };
+  });
+
+  if (questions.length === 0) {
+    questions = [
+      {
+        body: "Question 1",
+        is_mandatory: true,
+        display_order: 0,
+        options: [
+          { text: "Option 1", display_order: 0 },
+          { text: "Option 2", display_order: 1 },
+        ],
+        settings: { show_results_live: false, time_limit_secs: null },
+      },
+    ];
+  }
+
+  return { ...data, title, questions };
+}
 
 // post /api/polls
 export const createPoll = async (req: Request, res: Response) => {
@@ -26,7 +73,9 @@ export const createPoll = async (req: Request, res: Response) => {
       return res.status(400).json({ errors: parsed.error.flatten().fieldErrors });
     }
 
-    const { title, description, mode, is_anonymous, expires_at, questions: rawQuestions } = parsed.data;
+    const normalized = normalizeDraftCreatePoll(parsed.data);
+    const { title, description, mode, is_anonymous, expires_at, questions: rawQuestions, draft } =
+      normalized;
 
     const slug = nanoid(8);
 
@@ -102,7 +151,7 @@ export const createPoll = async (req: Request, res: Response) => {
       return { ...newPoll, questions: insertedQuestions };
     });
 
-    if (result.expires_at) {
+    if (result.expires_at && !draft) {
       await schedulePollExpiry(result.id, result.expires_at);
     }
 
@@ -117,7 +166,11 @@ export const createPoll = async (req: Request, res: Response) => {
 export const getMyPolls = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    if (!userId) 
+      {
+        console.log("Failed: userId is undefined!");
+        return res.status(401).json({ message: "Unauthorized" });
+      }
 
     const myPolls = await db
       .select()

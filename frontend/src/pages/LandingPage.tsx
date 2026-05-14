@@ -11,8 +11,9 @@ export const LandingPage: React.FC = () => {
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (roomCode.trim()) {
-      navigate(`/live/${roomCode.trim()}`);
+    const code = roomCode.trim().toUpperCase();
+    if (code) {
+      navigate(`/join/${encodeURIComponent(code)}`);
     }
   };
 
@@ -42,9 +43,10 @@ export const LandingPage: React.FC = () => {
             <form onSubmit={handleJoin} className="flex gap-2">
               <Input
                 placeholder="Enter Room Code"
-                className="h-14 w-full sm:w-48"
+                className="h-14 w-full sm:w-48 font-mono uppercase tracking-widest"
                 value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value)}
+                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                maxLength={12}
               />
               <Button type="submit" variant="outline" size="lg" className="h-14">
                 Join

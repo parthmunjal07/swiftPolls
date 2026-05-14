@@ -4,11 +4,12 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { PollMode } from "../types";
-import { ArrowLeft, GripVertical, Plus, Trash2, Rocket, Eye, Clock } from "lucide-react";
+import { ArrowLeft, GripVertical, Plus, Trash2, Rocket, Eye, Clock, UserRound } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent } from "../components/ui/Card";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createPoll } from "../api/polls";
+import { formToCreatePollPayload } from "../lib/pollPayload";
 
 // Zod validation schema
 const optionSchema = z.object({
@@ -26,9 +27,11 @@ const questionSchema = z.object({
 });
 
 const pollBuilderSchema = z.object({
-  title: z.string().min(1, "Poll title is required"),
+  title: z.string().min(5, "Title must be at least 5 characters").max(50, "Title is too long"),
   description: z.string().optional(),
   mode: z.enum(["live", "async"] as const),
+  /** Matches DB: true = responses need not be tied to a signed-in user (async link / guest). */
+  is_anonymous: z.boolean().default(false),
   expiresAt: z.string().nullable().optional(),
   questions: z.array(questionSchema).min(1, "At least 1 question required"),
 });
@@ -37,14 +40,17 @@ type PollBuilderForm = z.input<typeof pollBuilderSchema>;
 
 export const PollBuilderPage = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<PollMode>("live");
+  const [draftError, setDraftError] = useState<string | null>(null);
 
-  const { control, handleSubmit, formState: { errors }, setValue } = useForm<PollBuilderForm>({
+  const { control, handleSubmit, getValues, formState: { errors }, setValue } = useForm<PollBuilderForm>({
     resolver: zodResolver(pollBuilderSchema),
     defaultValues: {
       title: "",
       description: "",
       mode: "live",
+      is_anonymous: false,
       questions: [
         {
           title: "",
@@ -62,14 +68,35 @@ export const PollBuilderPage = () => {
   });
 
   const { mutate: publishPoll, isPending: isPublishing } = useMutation({
-    mutationFn: createPoll,
+    mutationFn: (data: PollBuilderForm) => createPoll(formToCreatePollPayload(data, { draft: false })),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["polls"] });
       navigate("/dashboard");
+    },
+  });
+
+  const { mutate: saveDraftMutation, isPending: isSavingDraft } = useMutation({
+    mutationFn: () => createPoll(formToCreatePollPayload(getValues(), { draft: true })),
+    onSuccess: () => {
+      setDraftError(null);
+      queryClient.invalidateQueries({ queryKey: ["polls"] });
+      navigate("/dashboard");
+    },
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { message?: string; errors?: unknown } } })?.response?.data?.message ??
+        "Could not save draft. Please try again.";
+      setDraftError(msg);
     },
   });
 
   const onSubmit = (data: PollBuilderForm) => {
     publishPoll(data);
+  };
+
+  const handleSaveDraft = () => {
+    setDraftError(null);
+    saveDraftMutation();
   };
 
   const handleModeChange = (newMode: PollMode) => {
@@ -89,10 +116,15 @@ export const PollBuilderPage = () => {
             <h1 className="font-semibold text-lg border-l border-border pl-4">Create New Poll</h1>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="hidden sm:flex" onClick={() => navigate("/dashboard")}>
-              Save Draft
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveDraft}
+              disabled={isSavingDraft || isPublishing}
+            >
+              {isSavingDraft ? "Saving…" : "Save Draft"}
             </Button>
-            <Button onClick={handleSubmit(onSubmit)} className="shadow-md shadow-primary/20" disabled={isPublishing}>
+            <Button onClick={handleSubmit(onSubmit)} className="shadow-md shadow-primary/20" disabled={isPublishing || isSavingDraft}>
               <Rocket className="mr-2 h-4 w-4" />
               {isPublishing ? "Publishing..." : "Publish Poll"}
             </Button>
@@ -102,6 +134,11 @@ export const PollBuilderPage = () => {
 
       {/* Main Builder Area */}
       <div className="max-w-5xl mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {draftError && (
+          <p className="mb-4 text-sm font-medium text-red-500" role="alert">
+            {draftError}
+          </p>
+        )}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           
           {/* Mode Toggle */}
@@ -129,6 +166,36 @@ export const PollBuilderPage = () => {
                   >
                     📊 Async
                   </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex gap-3">
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <UserRound className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-sm">Anonymous responses</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                      For async polls: if enabled, anyone with the link can respond without an account. If disabled,
+                      respondents must be signed in.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="poll-is-anonymous"
+                      className="h-4 w-4 accent-primary"
+                      {...control.register("is_anonymous", { valueAsBoolean: true })}
+                    />
+                    <label htmlFor="poll-is-anonymous" className="text-sm font-medium cursor-pointer">
+                      Allow anonymous responses
+                    </label>
+                  </div>
                 </div>
               </div>
             </CardContent>
