@@ -48,8 +48,8 @@ const flushRedisToDB = async (pollId: number) => {
           and(
             eq(analytics.poll_id, pollId),
             eq(analytics.option_id, optionId),
-            sql`${analytics.session_id} IS NULL`
-          )
+            sql`${analytics.session_id} IS NULL`,
+          ),
         )
         .limit(1);
 
@@ -76,8 +76,9 @@ export const getPollAnalytics = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const pollId = parseInt(req.params.pollId);
-    if (isNaN(pollId)) return res.status(400).json({ message: "Invalid poll ID" });
+    const pollId = parseInt(req.params.pollId as string);
+    if (isNaN(pollId))
+      return res.status(400).json({ message: "Invalid poll ID" });
 
     const [poll] = await db
       .select()
@@ -89,10 +90,11 @@ export const getPollAnalytics = async (req: Request, res: Response) => {
 
     await flushRedisToDB(pollId);
 
-    const [{ totalResponses }] = await db
+    const totalResponsesResult = await db
       .select({ totalResponses: count() })
       .from(responses)
       .where(eq(responses.poll_id, pollId));
+    const totalResponses = totalResponsesResult[0]?.totalResponses ?? 0;
 
     const pollQuestions = await db
       .select()
@@ -106,8 +108,8 @@ export const getPollAnalytics = async (req: Request, res: Response) => {
       .where(
         and(
           eq(analytics.poll_id, pollId),
-          sql`${analytics.session_id} IS NULL`
-        )
+          sql`${analytics.session_id} IS NULL`,
+        ),
       );
 
     const snapshotMap = new Map<number, number>();
@@ -140,7 +142,8 @@ export const getPollAnalytics = async (req: Request, res: Response) => {
         }, 0);
 
         const optionsWithStats = opts.map((opt) => {
-          const optCount = snapshotMap.get(opt.id) ?? directMap.get(opt.id) ?? 0;
+          const optCount =
+            snapshotMap.get(opt.id) ?? directMap.get(opt.id) ?? 0;
           const percentage =
             questionTotal > 0
               ? Math.round((optCount / questionTotal) * 100)
@@ -162,7 +165,7 @@ export const getPollAnalytics = async (req: Request, res: Response) => {
           total_answers: questionTotal,
           options: optionsWithStats,
         };
-      })
+      }),
     );
 
     return res.status(200).json({
@@ -182,8 +185,8 @@ export const getSessionAnalytics = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const pollId = parseInt(req.params.pollId);
-    const sessionId = parseInt(req.params.sessionId);
+    const pollId = parseInt(req.params.pollId as string);
+    const sessionId = parseInt(req.params.sessionId as string);
     if (isNaN(pollId) || isNaN(sessionId)) {
       return res.status(400).json({ message: "Invalid poll or session ID" });
     }
@@ -204,12 +207,13 @@ export const getSessionAnalytics = async (req: Request, res: Response) => {
 
     if (!session) return res.status(404).json({ message: "Session not found" });
 
-    const [{ totalResponses }] = await db
+    const totalResponsesResult = await db
       .select({ totalResponses: count() })
       .from(responses)
       .where(
-        and(eq(responses.poll_id, pollId), eq(responses.session_id, sessionId))
+        and(eq(responses.poll_id, pollId), eq(responses.session_id, sessionId)),
       );
+    const totalResponses = totalResponsesResult[0]?.totalResponses ?? 0;
 
     const sessionCounts = await db
       .select({
@@ -219,10 +223,7 @@ export const getSessionAnalytics = async (req: Request, res: Response) => {
       .from(response_ans)
       .innerJoin(responses, eq(response_ans.response_id, responses.id))
       .where(
-        and(
-          eq(responses.poll_id, pollId),
-          eq(responses.session_id, sessionId)
-        )
+        and(eq(responses.poll_id, pollId), eq(responses.session_id, sessionId)),
       )
       .groupBy(response_ans.option_id);
 
@@ -245,7 +246,7 @@ export const getSessionAnalytics = async (req: Request, res: Response) => {
 
         const questionTotal = opts.reduce(
           (sum, opt) => sum + (countMap.get(opt.id) ?? 0),
-          0
+          0,
         );
 
         const optionsWithStats = opts.map((opt) => {
@@ -271,7 +272,7 @@ export const getSessionAnalytics = async (req: Request, res: Response) => {
           total_answers: questionTotal,
           options: optionsWithStats,
         };
-      })
+      }),
     );
 
     return res.status(200).json({
@@ -292,8 +293,9 @@ export const getResponseTrend = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const pollId = parseInt(req.params.pollId);
-    if (isNaN(pollId)) return res.status(400).json({ message: "Invalid poll ID" });
+    const pollId = parseInt(req.params.pollId as string);
+    if (isNaN(pollId))
+      return res.status(400).json({ message: "Invalid poll ID" });
 
     const [poll] = await db
       .select()
@@ -326,7 +328,7 @@ export const getResponseTrend = async (req: Request, res: Response) => {
               AND submitted_at >= NOW() - INTERVAL '30 days'
             GROUP BY period
             ORDER BY period ASC
-          `
+          `,
     );
 
     return res.status(200).json({
@@ -348,8 +350,9 @@ export const getPollSummary = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const pollId = parseInt(req.params.pollId);
-    if (isNaN(pollId)) return res.status(400).json({ message: "Invalid poll ID" });
+    const pollId = parseInt(req.params.pollId as string);
+    if (isNaN(pollId))
+      return res.status(400).json({ message: "Invalid poll ID" });
 
     const [poll] = await db
       .select()
@@ -359,15 +362,17 @@ export const getPollSummary = async (req: Request, res: Response) => {
 
     if (!poll) return res.status(404).json({ message: "Poll not found" });
 
-    const [{ totalResponses }] = await db
+    const totalResponsesResult = await db
       .select({ totalResponses: count() })
       .from(responses)
       .where(eq(responses.poll_id, pollId));
+    const totalResponses = totalResponsesResult[0]?.totalResponses ?? 0;
 
-    const [{ totalQuestions }] = await db
+    const totalQuestionsResult = await db
       .select({ totalQuestions: count() })
       .from(questions)
       .where(eq(questions.poll_id, pollId));
+    const totalQuestions = totalQuestionsResult[0]?.totalQuestions ?? 0;
 
     const [lastResponse] = await db
       .select({ submitted_at: responses.submitted_at })

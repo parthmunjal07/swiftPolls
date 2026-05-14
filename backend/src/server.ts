@@ -14,6 +14,7 @@ import { authenticationMiddleware } from "./middlewares/auth.middleware.js";
 import { registerSocketHandlers } from "./sockets/index.js";
 import "./jobs/workers.js";
 import { initRepeatableJobs } from "./jobs/queues.js";
+import { setIO } from "./sockets/io.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -26,6 +27,7 @@ export const io = new SocketIOServer(httpServer, {
     credentials: true,
   },
 });
+setIO(io)
 
 registerSocketHandlers(io);
 

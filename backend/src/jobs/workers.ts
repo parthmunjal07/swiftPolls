@@ -5,7 +5,7 @@ import { redis } from "../utils/redis.js";
 import { db } from "../db/index.js";
 import { polls, users, analytics } from "../db/schema.js";
 import { sendPollExpiryEmail } from "../utils/mailer.js";
-import { io } from "../server.js";
+import { getIO } from "../sockets/io.js";
 
 // Worker for handling poll expirations
 export const expiryWorker = new Worker(
@@ -33,7 +33,7 @@ export const expiryWorker = new Worker(
 
       // Push WS event to anyone looking at the form view
       // We can emit to a room specific to the poll slug
-      io.to(`poll_${pollData.poll.slug}`).emit("poll_closed");
+      getIO().to(`poll_${pollData.poll.slug}`).emit("poll_closed");
 
       if (pollData.userEmail) {
         const pollUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/poll/${pollData.poll.slug}`;
