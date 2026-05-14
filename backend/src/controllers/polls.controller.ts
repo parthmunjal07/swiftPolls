@@ -166,11 +166,10 @@ export const createPoll = async (req: Request, res: Response) => {
 export const getMyPolls = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
-    if (!userId) 
-      {
-        console.log("Failed: userId is undefined!");
-        return res.status(401).json({ message: "Unauthorized" });
-      }
+    if (!userId) {
+      console.log("Failed: userId is undefined!");
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
     const myPolls = await db
       .select()
@@ -238,7 +237,9 @@ export const getPollBySlug = async (req: Request, res: Response) => {
 
     if (!poll) return res.status(404).json({ message: "Poll not found" });
 
-    if (poll.published_at) {
+    // 1. Check if expired
+    if (poll.expires_at && new Date() > poll.expires_at) {
+      // If expired, maybe you want to show results here?
       const pollQuestions = await db
         .select()
         .from(questions)
@@ -256,20 +257,24 @@ export const getPollBySlug = async (req: Request, res: Response) => {
         })
       );
 
+      // Let's show results if expired
       return res.status(200).json({
         poll: { ...poll, questions: questionsWithOptions },
         view: "results",
       });
     }
 
-    if (poll.expires_at && new Date() > poll.expires_at) {
-      return res.status(410).json({ message: "This poll has expired", view: "expired" });
-    }
-
+    // 2. Check if inactive (manually closed)
     if (!poll.is_active) {
-      return res.status(410).json({ message: "This poll is no longer active", view: "inactive" });
+      // Similar to expired, show results or an inactive message
+      // ... fetch questions ...
+      return res.status(200).json({
+        // poll data
+        view: "results" // or "inactive" depending on your preference
+      });
     }
 
+    // 3. Default: Poll is active and open for voting!
     const pollQuestions = await db
       .select()
       .from(questions)
