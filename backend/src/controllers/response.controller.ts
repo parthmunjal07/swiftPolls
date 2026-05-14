@@ -6,7 +6,6 @@ import {
   questions,
   responses,
   response_ans,
-  analytics,
 } from "../db/schema.js";
 import { submitAsyncResponseSchema } from "../validations/response.validate.js";
 import { redis } from "../utils/redis.js";
@@ -22,7 +21,6 @@ export const submitAsyncResponse = async (req: Request, res: Response) => {
 
     const { poll_id, answers, session_token } = parsed.data;
 
-    // 1. Fetch Poll & Expiry Check
     const [poll] = await db
       .select()
       .from(polls)
@@ -45,7 +43,6 @@ export const submitAsyncResponse = async (req: Request, res: Response) => {
       return res.status(403).json({ message: "Poll results have already been published" });
     }
 
-    // 2. Enforce Login if not Anonymous
     const user_id = req.user?.id || null;
     if (!poll.is_anonymous && !user_id) {
       return res.status(401).json({
@@ -53,7 +50,6 @@ export const submitAsyncResponse = async (req: Request, res: Response) => {
       });
     }
 
-    // 3. Duplicate Prevention
     let duplicateQuery;
     if (user_id) {
       duplicateQuery = and(
@@ -77,7 +73,6 @@ export const submitAsyncResponse = async (req: Request, res: Response) => {
       return res.status(409).json({ message: "You have already responded to this poll" });
     }
 
-    // 4. Validate Mandatory Questions
     const pollQuestions = await db
       .select()
       .from(questions)
@@ -95,13 +90,12 @@ export const submitAsyncResponse = async (req: Request, res: Response) => {
       });
     }
 
-    // 5. Submit inside Transaction
     await db.transaction(async (tx) => {
       const [newResponse] = await tx
         .insert(responses)
         .values({
           poll_id,
-          session_id: null, // Async polls do not have a session_id
+          session_id: null, 
           user_id,
           session_token,
           submitted_at: new Date(),
@@ -120,7 +114,6 @@ export const submitAsyncResponse = async (req: Request, res: Response) => {
         }))
       );
 
-      // 6. Buffer Analytics in Redis
       const pipeline = redis.pipeline();
       for (const ans of answers) {
         pipeline.incr(`analytics:${poll_id}:${ans.option_id}`);

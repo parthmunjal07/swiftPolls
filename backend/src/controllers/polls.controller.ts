@@ -318,9 +318,7 @@ export const deletePoll = async (req: Request, res: Response) => {
 
     if (!poll) return res.status(404).json({ message: "Poll not found" });
 
-    // Cascade manually since Drizzle doesn't auto-cascade
     await db.transaction(async (tx) => {
-      // Get question ids first
       const pollQuestions = await tx
         .select({ id: questions.id })
         .from(questions)

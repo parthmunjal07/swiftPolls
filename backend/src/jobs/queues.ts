@@ -2,10 +2,8 @@
 import { Queue } from "bullmq";
 import { redis } from "../utils/redis.js";
 
-// Queue for scheduling the auto-closing of polls
 export const expiryQueue = new Queue("poll-expiry", { connection: redis });
 
-// Queue for flushing analytics from Redis to Postgres
 export const analyticsQueue = new Queue("analytics-snapshot", { connection: redis });
 
 export const schedulePollExpiry = async (pollId: number, expiresAt: Date) => {
@@ -20,14 +18,13 @@ export const schedulePollExpiry = async (pollId: number, expiresAt: Date) => {
   }
 };
 
-// Start the repeatable analytics snapshot job (runs every 10 seconds)
 export const initRepeatableJobs = async () => {
   await analyticsQueue.add(
     "flush-analytics",
     {},
     {
       repeat: {
-        pattern: "*/10 * * * * *", // every 10 seconds
+        pattern: "*/10 * * * * *",
       },
     }
   );
