@@ -54,7 +54,7 @@ export const AudiencePage = () => {
     },
   });
 
-  const { mutate: submitVote } = useMutation({
+  const { mutate: submitVote, isPending: isSubmittingVote } = useMutation({
     mutationFn: (optionId: string) =>
       submitLiveResponse({
         session_id: sessionId!,
@@ -125,10 +125,14 @@ export const AudiencePage = () => {
     };
   }, [socket, state]);
 
-  const handleVote = (optionId: string) => {
+  const handleSelectOption = (optionId: string) => {
     if (hasVoted) return;
     setSelectedOption(optionId);
-    submitVote(optionId);
+  };
+
+  const handleSubmitVote = () => {
+    if (hasVoted || !selectedOption) return;
+    submitVote(selectedOption);
   };
 
   // --- JOIN FORM ---
@@ -285,7 +289,7 @@ export const AudiencePage = () => {
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => handleVote(opt.id)}
+                onClick={() => handleSelectOption(opt.id)}
                 disabled={hasVoted}
                 className={cn(
                   "relative w-full overflow-hidden rounded-xl border px-4 py-3.5 text-left text-sm font-medium",
@@ -327,6 +331,18 @@ export const AudiencePage = () => {
             );
           })}
         </div>
+
+        {!hasVoted && (
+          <Button
+            size="lg"
+            className="w-full shadow-lg shadow-primary/20 mt-6"
+            onClick={handleSubmitVote}
+            disabled={!selectedOption || isSubmittingVote}
+          >
+            {isSubmittingVote ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+            {isSubmittingVote ? "Submitting…" : "Submit Vote"}
+          </Button>
+        )}
 
         {/* Live bar chart (shown when results visible) */}
         {resultsVisible && (
