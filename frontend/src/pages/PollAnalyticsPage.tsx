@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Users, BarChart3, Clock, Rocket, TrendingUp, ChevronDown } from "lucide-react";
+import { ArrowLeft, Users, BarChart3, Clock, Rocket, ChevronDown } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   BarChart,
@@ -14,11 +14,9 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
 } from "recharts";
 import { Button } from "../components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
+import { Card, CardContent } from "../components/ui/Card";
 import { fetchPollAnalytics } from "../api/analytics";
 import { publishPoll } from "../api/polls";
 import { useSocket } from "../context/SocketContext";

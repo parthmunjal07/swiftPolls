@@ -30,8 +30,6 @@ export const AsyncPollPage = () => {
     enabled: !!slug,
   });
 
-  const poll = data.poll;
-  const view = data.view;
 
   const { mutate: submit, isPending: isSubmitting } = useMutation({
     mutationFn: submitAsyncResponse,
@@ -41,7 +39,7 @@ export const AsyncPollPage = () => {
     },
   });
 
-  if (isLoading) {
+  if (isLoading || isAuthLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -60,6 +58,9 @@ export const AsyncPollPage = () => {
       </div>
     );
   }
+
+  const poll = data.poll;
+  const view = data.view;
 
   if (data.view === "expired") {
     return (
