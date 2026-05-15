@@ -42,7 +42,6 @@ export const PollAnalyticsPage = () => {
   const { id: pollId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { socket } = useSocket();
-  const [activeTab, setActiveTab] = useState<"results" | "trends">("results");
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [liveData, setLiveData] = useState<PollAnalytics | null>(null);
 
@@ -78,16 +77,16 @@ export const PollAnalyticsPage = () => {
   const data =
     liveData && pollAnalytics
       ? {
-          ...pollAnalytics,
-          ...liveData,
-          status: liveData.status ?? pollAnalytics.status,
-          title: liveData.title ?? pollAnalytics.title,
-          totalResponses: liveData.totalResponses ?? pollAnalytics.totalResponses,
-          questions:
-            liveData.questions?.length && liveData.questions.length > 0
-              ? liveData.questions
-              : pollAnalytics.questions,
-        }
+        ...pollAnalytics,
+        ...liveData,
+        status: liveData.status ?? pollAnalytics.status,
+        title: liveData.title ?? pollAnalytics.title,
+        totalResponses: liveData.totalResponses ?? pollAnalytics.totalResponses,
+        questions:
+          liveData.questions?.length && liveData.questions.length > 0
+            ? liveData.questions
+            : pollAnalytics.questions,
+      }
       : liveData || pollAnalytics;
 
   if (isLoading) {
@@ -193,83 +192,22 @@ export const PollAnalyticsPage = () => {
           </Card>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-border">
-          <button
-            onClick={() => setActiveTab("results")}
-            className={`pb-3 px-4 text-sm font-medium transition-colors flex items-center gap-2 ${activeTab === "results"
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            <BarChart3 className="h-4 w-4" /> Results
-          </button>
-          <button
-            onClick={() => setActiveTab("trends")}
-            className={`pb-3 px-4 text-sm font-medium transition-colors flex items-center gap-2 ${activeTab === "trends"
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            <TrendingUp className="h-4 w-4" /> Trends
-          </button>
+        {/* Results List */}
+        <div className="space-y-6">
+          {data.questions.map((question) => (
+            <QuestionAccordion
+              key={question.id}
+              question={question}
+              isExpanded={expandedQuestion === question.id}
+              onToggle={() =>
+                setExpandedQuestion(
+                  expandedQuestion === question.id ? null : question.id
+                )
+              }
+            />
+          ))}
         </div>
 
-        {/* Results Tab */}
-        {activeTab === "results" && (
-          <div className="space-y-6">
-            {data.questions.map((question) => (
-              <QuestionAccordion
-                key={question.id}
-                question={question}
-                isExpanded={expandedQuestion === question.id}
-                onToggle={() =>
-                  setExpandedQuestion(
-                    expandedQuestion === question.id ? null : question.id
-                  )
-                }
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Trends Tab */}
-        {activeTab === "trends" && (
-          <div className="space-y-6">
-            {data.questions.map((question) => (
-              question.trend && question.trend.length > 0 && (
-                <Card key={question.id} className="border-border shadow-sm">
-                  <CardHeader>
-                    <CardTitle>{question.title} - Vote Trend</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[300px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={question.trend}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis
-                            dataKey="timestamp"
-                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                          />
-                          <YAxis
-                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                          />
-                          <Tooltip content={<CustomTooltip />} />
-                          <Line
-                            type="monotone"
-                            dataKey="votes"
-                            stroke="hsl(var(--primary))"
-                            dot={false}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

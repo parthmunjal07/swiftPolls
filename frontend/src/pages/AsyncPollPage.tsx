@@ -11,21 +11,27 @@ import { CHART_BAR_COLORS, chartAxisTick, VotesBarTooltip } from "../lib/chartTh
 import { cn } from "../lib/utils";
 import { ThankYouPage } from "./ThankYouPage";
 import type { Question } from "../types";
+import { useAuth } from "../context/AuthContext";
 
 export const AsyncPollPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const dedupKey = `pb_submitted_${slug}`;
   const alreadySubmitted = !!localStorage.getItem(dedupKey);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["poll-slug", slug],
     queryFn: () => fetchPollBySlug(slug!),
     enabled: !!slug,
   });
+
+  const poll = data.poll;
+  const view = data.view;
 
   const { mutate: submit, isPending: isSubmitting } = useMutation({
     mutationFn: submitAsyncResponse,
@@ -70,9 +76,6 @@ export const AsyncPollPage = () => {
     );
   }
 
-  const poll = data.poll;
-  const view = data.view;
-
   if (submitted) {
     return <ThankYouPage pollSlug={slug} pollTitle={poll.title} showResults={view === "results"} />;
   }
@@ -87,6 +90,23 @@ export const AsyncPollPage = () => {
           <h1 className="text-2xl font-bold">Already Submitted</h1>
           <p className="text-muted-foreground">You've already responded to this poll from this device.</p>
           <Button variant="outline" onClick={() => navigate("/")}>Back to Home</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (view !== "results" && !poll.is_anonymous && !isAuthLoading && !user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="text-center space-y-4 max-w-sm animate-in fade-in duration-500">
+          <div className="mx-auto w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+            <AlertTriangle className="h-10 w-10 text-amber-600 dark:text-amber-400" />
+          </div>
+          <h1 className="text-2xl font-bold">Login Required</h1>
+          <p className="text-muted-foreground">The creator of this poll requires voters to be signed in to prevent duplicate responses.</p>
+          <Button onClick={() => navigate("/login")} className="w-full">
+            Log In to Vote
+          </Button>
         </div>
       </div>
     );
