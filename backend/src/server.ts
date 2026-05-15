@@ -6,7 +6,7 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.routes.js";
-import pollRouter  from "./routes/poll.routes.js";
+import pollRouter from "./routes/poll.routes.js";
 import { analyticsRouter } from "./routes/analytics.routes.js";
 import { responseRouter } from "./routes/response.routes.js";
 import { sessionRouter } from "./routes/session.routes.js";
@@ -22,7 +22,7 @@ const httpServer = createServer(app);
 
 export const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: true,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -33,7 +33,7 @@ registerSocketHandlers(io);
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: true,
     credentials: true,
   })
 );

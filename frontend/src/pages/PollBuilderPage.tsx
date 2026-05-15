@@ -147,7 +147,7 @@ export const PollBuilderPage = () => {
           </p>
         )}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          
+
           {/* Mode Toggle */}
           <Card className="border-border shadow-sm">
             <CardContent className="p-4 sm:p-6">
@@ -163,7 +163,7 @@ export const PollBuilderPage = () => {
                     onClick={() => handleModeChange("live")}
                     className="gap-2 flex-1 sm:flex-none"
                   >
-                    🔴 Live
+                    Live
                   </Button>
                   <Button
                     type="button"
@@ -171,7 +171,7 @@ export const PollBuilderPage = () => {
                     onClick={() => handleModeChange("async")}
                     className="gap-2 flex-1 sm:flex-none"
                   >
-                    📊 Async
+                    Async
                   </Button>
                 </div>
               </div>
