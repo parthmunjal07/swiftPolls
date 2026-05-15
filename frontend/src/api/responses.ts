@@ -1,10 +1,10 @@
 import api from "../lib/axios";
 
 export const submitLiveResponse = async (data: {
-  session_id: string;
-  poll_id: string;
-  question_id: string;
-  option_id: string;
+  session_id: number;
+  poll_id: number;
+  ques_id: number;
+  option_id: number;
   session_token?: string;
 }) => {
   const response = await api.post("/responses", data);

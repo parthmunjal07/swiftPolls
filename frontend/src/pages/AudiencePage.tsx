@@ -57,13 +57,17 @@ export const AudiencePage = () => {
   const { mutate: submitVote, isPending: isSubmittingVote } = useMutation({
     mutationFn: (optionId: string) =>
       submitLiveResponse({
-        session_id: sessionId!,
-        poll_id: pollId!,
-        question_id: currentQuestion!.id,
-        option_id: optionId,
-        session_token: sessionToken ?? undefined,
+        session_id: Number(sessionId),
+        poll_id: Number(pollId),
+        ques_id: Number(currentQuestion!.id), // Matches backend "ques_id"
+        option_id: Number(optionId),
+        session_token: sessionToken ?? "",
       }),
     onSuccess: () => setHasVoted(true),
+    onError: (err: any) => {
+      console.error(err);
+      alert(err?.response?.data?.message || "Failed to submit vote. Check console.");
+    }
   });
 
   // Join WS room after joining session
