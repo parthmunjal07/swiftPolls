@@ -49,7 +49,7 @@ export const AudiencePage = () => {
       setState("waiting");
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.message ?? "Could not join session.";
+      const msg = err?.response?.data?.message || err?.response?.data?.error || "Network error: Could not reach the server.";
       setJoinError(msg);
     },
   });

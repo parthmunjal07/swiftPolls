@@ -33,7 +33,6 @@ export const startSession = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Can only start sessions for live polls" });
     }
 
-    // Check if there is already an active session
     const [existingSession] = await db
       .select()
       .from(sessions)
@@ -44,9 +43,8 @@ export const startSession = async (req: Request, res: Response) => {
       return res.status(409).json({ message: "An active session already exists for this poll", session: existingSession });
     }
 
-    // Create a new session
     const room_code = generateRoomCode();
-    
+
     const [newSession] = await db
       .insert(sessions)
       .values({
@@ -75,7 +73,10 @@ export const joinSession = async (req: Request, res: Response) => {
   try {
     const parsed = joinSessionSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ errors: parsed.error.flatten().fieldErrors });
+      return res.status(400).json({
+        message: "Invalid room code or display name format.", // <--- ADD THIS LINE
+        errors: parsed.error.flatten().fieldErrors
+      });
     }
 
     const { room_code, display_name } = parsed.data;
