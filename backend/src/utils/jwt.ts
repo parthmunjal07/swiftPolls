@@ -3,15 +3,15 @@ import type { Response } from "express";
 
 export const generateTokens = (userId: number) => {
   const accessToken = jwt.sign(
-    { userId }, 
-    process.env.JWT_ACCESS_SECRET as string, 
-    { expiresIn: "15m" } 
+    { userId },
+    process.env.JWT_ACCESS_SECRET as string,
+    { expiresIn: "15m" }
   );
-  
+
   const refreshToken = jwt.sign(
-    { userId }, 
-    process.env.JWT_REFRESH_SECRET as string, 
-    { expiresIn: "7d" } 
+    { userId },
+    process.env.JWT_REFRESH_SECRET as string,
+    { expiresIn: "7d" }
   );
 
   return { accessToken, refreshToken };
@@ -20,20 +20,20 @@ export const generateTokens = (userId: number) => {
 export const verifyAccessToken = (token: string) => {
   try {
     const decoded = jwt.verify(
-      token, 
+      token,
       process.env.JWT_ACCESS_SECRET as string
     );
     return decoded as { userId: number };
   } catch (error) {
-  return null; 
+    return null;
   }
 };
 
 export const setRefreshCookie = (res: Response, token: string) => {
   res.cookie("refreshToken", token, {
-    httpOnly: true, 
-    secure: process.env.NODE_ENV === "production", 
-    sameSite: "strict", 
-    maxAge: 7 * 24 * 60 * 60 * 1000, 
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
