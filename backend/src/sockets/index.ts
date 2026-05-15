@@ -14,16 +14,14 @@ export const registerSocketHandlers = (io: Server) => {
       console.log(`Socket ${socket.id} joined room ${room_code}`);
     });
 
-    // --- Host Controls ---
-
-    socket.on("next_question", async ({ room_code, new_index }) => {
+    socket.on("next_question", async ({ room_code, new_index, question }) => {
       try {
         await db
           .update(sessions)
           .set({ current_question_index: new_index })
           .where(eq(sessions.room_code, room_code));
 
-        io.to(room_code).emit("question_changed", { current_question_index: new_index });
+        io.to(room_code).emit("question_changed", { current_question_index: new_index, question });
       } catch (error) {
         console.error("Error on next_question:", error);
       }

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import {
   ChevronLeft, ChevronRight, Eye, EyeOff, Unlock, Lock,
-  StopCircle, Loader2, Users, Wifi, WifiOff, AlertTriangle,
+  StopCircle, Loader2, Users, Wifi, WifiOff, AlertTriangle, Send
 } from "lucide-react";
 import { fetchPollById } from "../api/polls";
 import { useSocket } from "../context/SocketContext";
@@ -83,7 +83,18 @@ export const PresenterPage = () => {
     if (!poll) return;
     const newIndex = Math.max(0, Math.min(index, poll.questions.length - 1));
     setSession((prev) => ({ ...prev, currentIndex: newIndex, answersOpen: false, resultsVisible: false }));
-    emit("next_question", { new_index: newIndex });
+    emit("next_question", {
+      new_index: newIndex,
+      question: poll.questions[newIndex]
+    });
+  };
+
+  const pushToAudience = () => {
+    if (!poll) return;
+    emit("next_question", {
+      new_index: session.currentIndex,
+      question: poll.questions[session.currentIndex]
+    });
   };
 
   const toggleAnswers = () => {
@@ -184,16 +195,14 @@ export const PresenterPage = () => {
               <button
                 key={q.id ?? i}
                 onClick={() => goToQuestion(i)}
-                className={`w-full text-left px-3 py-3 rounded-lg transition-all duration-150 ${
-                  i === session.currentIndex
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "hover:bg-muted text-foreground"
-                }`}
+                className={`w-full text-left px-3 py-3 rounded-lg transition-all duration-150 ${i === session.currentIndex
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "hover:bg-muted text-foreground"
+                  }`}
               >
                 <div className="flex items-start gap-2.5">
-                  <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                    i === session.currentIndex ? "bg-white/20" : "bg-muted-foreground/20 text-muted-foreground"
-                  }`}>
+                  <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${i === session.currentIndex ? "bg-white/20" : "bg-muted-foreground/20 text-muted-foreground"
+                    }`}>
                     {i + 1}
                   </span>
                   <span className="text-sm font-medium leading-snug line-clamp-2">
@@ -299,6 +308,15 @@ export const PresenterPage = () => {
         </Button>
 
         <div className="h-6 w-px bg-border mx-1" />
+
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={pushToAudience}
+          className="gap-1.5"
+        >
+          <Send className="h-4 w-4" /> Push to Screens
+        </Button>
 
         {/* Open/Close Answers */}
         <Button
