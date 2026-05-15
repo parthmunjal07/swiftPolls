@@ -171,13 +171,23 @@ export const getMyPolls = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const myPolls = await db
-      .select()
+    const myPollsData = await db
+      .select({
+        poll: polls,
+        totalResponses: count(responses.id),
+      })
       .from(polls)
+      .leftJoin(responses, eq(polls.id, responses.poll_id))
       .where(eq(polls.user_id, userId))
+      .groupBy(polls.id)
       .orderBy(polls.created_at);
 
-    return res.status(200).json({ polls: myPolls });
+    const formattedPolls = myPollsData.map((row) => ({
+      ...row.poll,
+      totalResponses: row.totalResponses,
+    }));
+
+    return res.status(200).json({ polls: formattedPolls });
   } catch (error) {
     console.error("getMyPolls error:", error);
     return res.status(500).json({ message: "Internal server error" });
