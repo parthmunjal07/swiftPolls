@@ -2,7 +2,7 @@ import api from "../lib/axios";
 import type { Session } from "../types";
 
 export const createSession = async (pollId: string): Promise<{ session: Session }> => {
-  const { data } = await api.post(`/sessions`, { poll_id: pollId });
+  const { data } = await api.post(`/sessions`, { poll_id: Number(pollId) });
   return data;
 };
 
