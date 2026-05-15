@@ -6,9 +6,11 @@ import {
   questions,
   responses,
   response_ans,
+  sessions
 } from "../db/schema.js";
-import { submitAsyncResponseSchema } from "../validations/response.validate.js";
+import { submitAsyncResponseSchema, submitLiveAnswerSchema } from "../validations/response.validate.js";
 import { redis } from "../utils/redis.js";
+import { getIO } from "../sockets/io.js";
 
 export const submitAsyncResponse = async (req: Request, res: Response) => {
   try {
@@ -124,6 +126,69 @@ export const submitAsyncResponse = async (req: Request, res: Response) => {
     return res.status(201).json({ message: "Response submitted successfully" });
   } catch (error) {
     console.error("submitAsyncResponse error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const submitLiveResponse = async (req: Request, res: Response) => {
+  try {
+    const parsed = submitLiveAnswerSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ errors: parsed.error.flatten().fieldErrors });
+    }
+
+    const { session_id, poll_id, ques_id, option_id, session_token } = parsed.data;
+
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.id, session_id))
+      .limit(1);
+
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    await db.transaction(async (tx) => {
+      const [newResponse] = await tx
+        .insert(responses)
+        .values({
+          poll_id,
+          session_id,
+          user_id: req.user?.id || null,
+          session_token,
+          submitted_at: new Date(),
+        })
+        .returning();
+
+      await tx.insert(response_ans).values({
+        response_id: newResponse.id,
+        ques_id,
+        option_id,
+      });
+    });
+
+    await redis.incr(`analytics:${poll_id}:${option_id}`);
+
+    const keys = await redis.keys(`analytics:${poll_id}:*`);
+    const counts: Record<string, number> = {};
+
+    if (keys.length > 0) {
+      const values = await redis.mget(keys);
+      keys.forEach((key, index) => {
+        const optId = key.split(":")[2];
+        counts[optId] = parseInt(values[index] || "0", 10);
+      });
+    }
+
+    getIO().to(session.room_code).emit("vote_update", {
+      questionId: ques_id.toString(),
+      counts
+    });
+
+    return res.status(201).json({ message: "Vote submitted successfully" });
+  } catch (error) {
+    console.error("submitLiveResponse error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
