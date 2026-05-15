@@ -174,7 +174,7 @@ export const submitLiveResponse = async (req: Request, res: Response) => {
     const counts: Record<string, number> = {};
 
     if (keys.length > 0) {
-      const values = await redis.mget(keys);
+      const values = await redis.mget(...keys);
       keys.forEach((key, index) => {
         const optId = key.split(":")[2];
         counts[optId] = parseInt(values[index] || "0", 10);
